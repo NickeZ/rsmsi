@@ -1,7 +1,7 @@
-#[macro_use]
 extern crate clap;
 
 mod options;
+mod makro;
 
 use options::Options;
 
