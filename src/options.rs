@@ -1,8 +1,9 @@
+use std::collections::HashMap;
 use std::path::PathBuf;
 
 use clap::{Arg, App};
 
-use makro::{Macro, parse_macros};
+use makro::{Macro, MacroSet, parse_macros};
 
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
@@ -17,7 +18,7 @@ pub struct Options {
     pub includes: Vec<PathBuf>,
 
     // Extra macros
-    pub macros: Vec<Macro>,
+    pub macros: MacroSet,
 
     // Substitutions file
     pub subfile: Option<PathBuf>,
@@ -32,7 +33,7 @@ impl Default for Options {
             werr: false,
             outfile: None,
             includes: Vec::new(),
-            macros: Vec::new(),
+            macros: HashMap::new(),
             subfile: None,
             infile: None,
         }
@@ -82,7 +83,7 @@ impl Options {
             includev.map(|b| options.includes.push(PathBuf::from(b))).collect::<Vec<()>>();
         }
         if let Some(macrosv) = matches.values_of("macros") {
-            macrosv.map(|m| options.macros.append(&mut parse_macros(m).unwrap())).collect::<Vec<()>>();
+            macrosv.map(|m| options.macros.extend(parse_macros(m).unwrap())).collect::<Vec<()>>();
         }
         if let Some(subfile) = matches.value_of("subfile") {
             options.subfile = Some(PathBuf::from(subfile));
