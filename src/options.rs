@@ -17,7 +17,7 @@ pub struct Options {
     pub includes: Vec<PathBuf>,
 
     // Extra macros
-    pub macros: Vec<Macro>,
+    pub macros: Vec<Macro<'static>>,
 
     // Substitutions file
     pub subfile: Option<PathBuf>,
@@ -82,6 +82,7 @@ impl Options {
             includev.map(|b| options.includes.push(PathBuf::from(b))).collect::<Vec<()>>();
         }
         if let Some(macrosv) = matches.values_of("macros") {
+            let macrosv = macrosv.map(String::from);
             macrosv.map(|m| options.macros.append(&mut parse_macros(m).unwrap())).collect::<Vec<()>>();
         }
         if let Some(subfile) = matches.value_of("subfile") {
