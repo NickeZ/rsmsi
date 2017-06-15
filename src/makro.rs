@@ -23,9 +23,9 @@ pub struct Macro {
 /// Function to parse macros on the command line, i.e. -M A=C,B=D
 pub fn parse_macros(input: &str) -> Result<MacroSet, Error> {
     let mut result = HashMap::new();
-    let res = input.split(',')
-        .map(parse_macro).collect::<Result<Vec<Option<Macro>>,_>>()?;
-    result.extend(res.into_iter()
+    result.extend(input.split(',')
+        .map(parse_macro).collect::<Result<Vec<Option<Macro>>,_>>()?
+        .into_iter()
         .filter_map(|m| m)
         .map(|m| (m.name.clone(), m)));
     Ok(result)

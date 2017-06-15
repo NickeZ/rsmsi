@@ -95,8 +95,9 @@ impl Options {
             includev.map(|b| options.includes.push(PathBuf::from(b))).collect::<Vec<()>>();
         }
         if let Some(macrosv) = matches.values_of("macros") {
-            let parsed_macros = macrosv.map(parse_macros).collect::<Result<Vec<MacroSet>, makro::Error>>()?;
-            parsed_macros.into_iter()
+            macrosv.map(parse_macros)
+                .collect::<Result<Vec<MacroSet>, makro::Error>>()?
+                .into_iter()
                 .map(|m| {options.macros.extend(m);})
                 .collect::<Vec<()>>();
         }
