@@ -3,7 +3,7 @@ use std::path::PathBuf;
 
 use clap::{Arg, App};
 
-use makro::{Macro, MacroSet, parse_macros};
+use makro::{self, Macro, MacroSet, parse_macros};
 
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
@@ -40,8 +40,20 @@ impl Default for Options {
     }
 }
 
+#[derive(Debug)]
+pub enum Error {
+    MakroError(makro::Error)
+}
+
+impl From<makro::Error> for Error {
+    fn from(err: makro::Error) -> Error {
+        Error::MakroError(err)
+    }
+}
+
+
 impl Options {
-    pub fn parse_args() -> Options {
+    pub fn parse_args() -> Result<Options, Error> {
         let mut options = Options::default();
         let matches = App::new("rsmsi")
             .version(VERSION)
@@ -83,12 +95,15 @@ impl Options {
             includev.map(|b| options.includes.push(PathBuf::from(b))).collect::<Vec<()>>();
         }
         if let Some(macrosv) = matches.values_of("macros") {
-            macrosv.map(|m| options.macros.extend(parse_macros(m).unwrap())).collect::<Vec<()>>();
+            let parsed_macros = macrosv.map(parse_macros).collect::<Result<Vec<MacroSet>, makro::Error>>()?;
+            parsed_macros.into_iter()
+                .map(|m| {options.macros.extend(m);})
+                .collect::<Vec<()>>();
         }
         if let Some(subfile) = matches.value_of("subfile") {
             options.subfile = Some(PathBuf::from(subfile));
         }
 
-        options
+        Ok(options)
     }
 }

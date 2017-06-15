@@ -8,7 +8,7 @@ use options::Options;
 fn main() {
     println!("Hello, world!");
 
-    let options = Options::parse_args();
+    let options = Options::parse_args().expect("Failed to parse options");
 
     println!("{:?}", options.macros);
 }
