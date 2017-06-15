@@ -1,0 +1,17 @@
+use std::str::FromStr;
+use ast::Expr;
+
+grammar;
+
+pub Expr: Box<Expr> = {
+    ExprTwo+ => Box::new(Expr::List(<>)),
+};
+
+ExprTwo: Box<Expr> = {
+    Name => Box::new(Expr::Final(<>)),
+    "${" <ExprTwo+> "}" => Box::new(Expr::Makro(<>)),
+    "${" <ExprTwo+> "=}" => Box::new(Expr::MakroWithDefault(<>, vec![Box::new(Expr::Final(String::from("")))])),
+    "${" <l:ExprTwo+> "=" <r:ExprTwo+> "}" => Box::new(Expr::MakroWithDefault(l,r)),
+};
+
+Name: String = r"[A-Za-z0-9]+" => <>.to_string();
