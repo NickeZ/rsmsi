@@ -91,8 +91,10 @@ impl Options {
         if let Some(outfile) = matches.value_of("outfile") {
             options.outfile = Some(PathBuf::from(outfile));
         }
-        if let Some(includev) = matches.values_of("include") {
-            includev.map(|b| options.includes.push(PathBuf::from(b))).collect::<Vec<()>>();
+        if let Some(includev) = matches.values_of("includes") {
+            options.includes.extend(includev.map(PathBuf::from)
+                .filter(|p| p.is_dir())
+                .into_iter());
         }
         if let Some(macrosv) = matches.values_of("macros") {
             macrosv.map(parse_macros)
