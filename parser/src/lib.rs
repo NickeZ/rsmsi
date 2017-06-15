@@ -1,44 +1,77 @@
 #[macro_use]
 extern crate nom;
 
-pub mod parser;
+use nom::alphanumeric;
 
-#[derive(Debug)]
-struct A<'a> {makro: &'a [u8]}
+//#[derive(Debug)]
+//struct A<'a> {makro: &'a [u8]}
 
-named!(brace_makro (&[u8]) -> A,
+//named!(makro_name,
+//    ws!(
+//        alphanumeric
+//    )
+//);
+
+named!(makro<(&[u8], &[u8])>,
     do_parse!(
-        tag!("${") >>
-        makro: take_until!("}") >>
-        tag!("}") >>
+        name: alphanumeric >>
+        tag!("=") >>
+        value: alphanumeric >>
 
-        (A{makro: makro})
+        (name, value)
     )
 );
 
-named!(paren_makro (&[u8]) -> A,
-    do_parse!(
-        tag!("$(") >>
-        makro: take_until!(")") >>
-        tag!(")") >>
-
-        (A{makro: makro})
+named!(braced<Vec<(&[u8], &[u8])>>,
+    ws!(
+        delimited!(
+            tag!("{"),
+            separated_list!(tag!(","), makro),
+            tag!("}")
+        )
     )
 );
+
+//named!(makros,
+
+//named!(pattern (&[u8]) -> Vec<&[u8]>,
+//    do_parse!(
+//        tag!("pattern") >>
+//        take_until!("{") >>
+//        tag!("{") >>
+//        makro: take_until!("}") >>
+//        tag!("}") >>
+//
+//        (A{makro: makro})
+//    )
+//);
 
 #[cfg(test)]
 mod tests {
-    use parser;
     use nom;
     #[test]
     fn it_works() {
-        match ::brace_makro(&b"${TEST1}"[..]) {
-            nom::IResult::Done(_, res) => println!("{}", String::from_utf8(res.makro.to_vec()).unwrap()),
-            _ => (),
+        match ::braced(&b"{P=TEST,var=VAL}"[..]) {
+            nom::IResult::Done(_, res) => {
+                println!("success");
+                for (nam, val) in res {
+                    println!("{} {}", 
+                             String::from_utf8(nam.to_vec()).unwrap(),
+                             String::from_utf8(val.to_vec()).unwrap())
+                }
+            },
+            _ => println!("Failed"),
         }
-        match ::paren_makro(&b"$(TEST2)"[..]) {
-            nom::IResult::Done(_, res) => println!("{}", String::from_utf8(res.makro.to_vec()).unwrap()),
-            _ => (),
+        match ::braced(&b"{ P=TEST , var=VAL }"[..]) {
+            nom::IResult::Done(_, res) => {
+                println!("success");
+                for (nam, val) in res {
+                    println!("{} {}", 
+                             String::from_utf8(nam.to_vec()).unwrap(),
+                             String::from_utf8(val.to_vec()).unwrap())
+                }
+            },
+            _ => println!("Failed"),
         }
     }
 }
