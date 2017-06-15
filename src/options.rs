@@ -104,7 +104,10 @@ impl Options {
                 .collect::<Vec<()>>();
         }
         if let Some(subfile) = matches.value_of("subfile") {
-            options.subfile = Some(PathBuf::from(subfile));
+            let subfile = PathBuf::from(subfile);
+            if subfile.is_file() {
+                options.subfile = Some(subfile);
+            }
         }
 
         Ok(options)

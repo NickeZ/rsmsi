@@ -10,6 +10,7 @@ fn main() {
 
     let options = Options::parse_args().expect("Failed to parse options");
 
+    println!("Sub {:?}", options.subfile);
     println!("Makros {:?}", options.macros);
     println!("Includes {:?}", options.includes);
 }
