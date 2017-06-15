@@ -20,7 +20,7 @@ pub struct Macro {
     value: Option<String>,
 }
 
-/// Function to parse macros on the command line, i.e. -M A=C,B=D
+/// Function to parse comma sperated macros , i.e. A=C,B=D
 pub fn parse_macros(input: &str) -> Result<MacroSet, Error> {
     let mut result = HashMap::new();
     result.extend(input.split(',')
@@ -31,7 +31,7 @@ pub fn parse_macros(input: &str) -> Result<MacroSet, Error> {
     Ok(result)
 }
 
-/// Function to parse a single macro, i.e. A=C
+/// Function to parse a single macro, i.e. A=C. Removes all whitespace
 fn parse_macro(input: &str) -> Result<Option<Macro>, Error> {
     let input = input.trim();
     if input.len() == 0 {
