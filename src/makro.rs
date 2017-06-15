@@ -58,12 +58,22 @@ fn test_parse_macros_multi1() {
     let mut m = m.iter();
     let (name, mak) =  m.next().unwrap();
     let value = mak.value.clone().unwrap();
-    assert!(name == "macro", format!("name was {:?}", name));
-    assert!(value == "value", format!("value was {:?}", value));
-    let (name, mak) =  m.next().unwrap();
-    let value = mak.value.clone().unwrap();
-    assert!(name == "macro2", format!("name was {:?}", name));
-    assert!(value == "value", format!("value was {:?}", value));
+    // The order we get out the macros is undefined..
+    if name == "macro" {
+        assert!(name == "macro", format!("name was {:?}", name));
+        assert!(value == "value", format!("value was {:?}", value));
+        let (name, mak) =  m.next().unwrap();
+        let value = mak.value.clone().unwrap();
+        assert!(name == "macro2", format!("name was {:?}", name));
+        assert!(value == "value", format!("value was {:?}", value));
+    } else {
+        assert!(name == "macro2", format!("name was {:?}", name));
+        assert!(value == "value", format!("value was {:?}", value));
+        let (name, mak) =  m.next().unwrap();
+        let value = mak.value.clone().unwrap();
+        assert!(name == "macro", format!("name was {:?}", name));
+        assert!(value == "value", format!("value was {:?}", value));
+    }
     assert!(m.next().is_none());
 }
 
