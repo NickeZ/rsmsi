@@ -6,16 +6,29 @@ mod grammar;
 mod ast;
 
 use options::Options;
+use makro::MacroSet;
+use std::io::Read;
 
 fn main() {
     println!("Hello, world!");
 
     let options = Options::parse_args().expect("Failed to parse options");
 
+    let mut input = Vec::new();
+    if let Some(template) = options.infile {
+        std::fs::File::open(template).unwrap().read_to_end(&mut input).unwrap();
+    } else {
+        std::io::stdin().read_to_end(&mut input).unwrap();
+    };
 
-    println!("Sub {:?}", options.subfile);
-    println!("Makros {:?}", options.macros);
-    println!("Includes {:?}", options.includes);
+    let res = expand_template(&String::from_utf8(input).unwrap(), &options.macros);
+
+    println!("{}", res);
+
+
+    //println!("Sub {:?}", options.subfile);
+    //println!("Makros {:?}", options.macros);
+    //println!("Includes {:?}", options.includes);
 }
 
 #[test]
@@ -45,27 +58,24 @@ fn grammar() {
     assert!(res == "APA", "Did not expand to APA");
 }
 
-fn expand_template(template: &str, macros: Vec<(&str, &str)>) -> String {
+fn expand_template(template: &str, macros: &MacroSet) -> String {
     let t = grammar::parse_Expr(template).unwrap();
-    println!("{:?}", t);
-    expand_template_priv(*t, &macros)
+    expand_template_priv(*t, macros)
 }
 
 use ast::Expr;
 
-fn expand_template_priv(item: Expr, macros: &Vec<(&str, &str)>) -> String {
+fn expand_template_priv(item: Expr, macros: &MacroSet) -> String {
     match item {
         Expr::Makro(list) => {
             let mut res = String::new();
             for e in list {
                 res.push_str(&expand_template_priv(*e, macros));
             }
-            for s in macros {
-                if res.as_str() == s.0 {
-                    return res.replace(s.0, s.1);
-                }
+            if let Some(sub) = macros.get(&res) {
+                return sub.value.clone().unwrap();
             }
-            res
+            String::from("undefined")
         },
         Expr::List(list) => {
             let mut res = String::new();
@@ -79,10 +89,8 @@ fn expand_template_priv(item: Expr, macros: &Vec<(&str, &str)>) -> String {
             for e in name_list {
                 res.push_str(&expand_template_priv(*e, macros));
             }
-            for s in macros {
-                if res.as_str() == s.0 {
-                    return res.replace(s.0, s.1);
-                }
+            if let Some(sub) = macros.get(&res) {
+                return sub.value.clone().unwrap();
             }
             res.clear();
             for e in default_list {

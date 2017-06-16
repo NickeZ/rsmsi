@@ -11,13 +11,13 @@ pub enum Error {
 #[derive(Debug)]
 pub struct Macro {
     // Name of the macro
-    name: String,
+    pub name: String,
 
     // Default value of the macro. E.g. $(TEST=default)
-    default: Option<String>,
+    pub default: Option<String>,
 
     // Value of the macro.
-    value: Option<String>,
+    pub value: Option<String>,
 }
 
 /// Function to parse comma sperated macros , i.e. A=C,B=D
