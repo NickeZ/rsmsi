@@ -14,4 +14,4 @@ ExprTwo: Box<Expr> = {
     "${" <l:ExprTwo+> "=" <r:ExprTwo+> "}" => Box::new(Expr::MakroWithDefault(l,r)),
 };
 
-Name: String = r"[A-Za-z0-9]+" => <>.to_string();
+Name: String = r"[A-Za-z0-9 ]+" => <>.to_string();
