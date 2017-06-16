@@ -1,18 +1,18 @@
 use std::str::FromStr;
-use ast::SubsExpr;
+use ast::{SubsExpr, Template};
 
 grammar;
 //pub TmplExpr: Vec<SubsExpr> = {
 //    Name,
 //};
 
-pub SubsExpr: Vec<Box<SubsExpr>> = {
+pub SubsExpr: Vec<Box<Template>> = {
     File*
 };
 
-File: Box<SubsExpr> = {
-    "file" <Name> "{" <Matching> "}" => Box::new(SubsExpr::Template(<>)),
-    "\"" "file" "\"" <Name> "{" <Matching> "}" => Box::new(SubsExpr::Template(<>)),
+File: Box<Template> = {
+    "file" <Name> "{" <Matching> "}" => Box::new(Template(<>)),
+    "file" "\"" <Name> "\"" "{" <Matching> "}" => Box::new(Template(<>)),
 };
 
 Matching: Box<SubsExpr> = {

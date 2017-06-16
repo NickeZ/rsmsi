@@ -6,8 +6,10 @@ pub enum TmplExpr {
 }
 
 #[derive(PartialEq, Debug)]
+pub struct Template(pub String, pub Box<SubsExpr>);
+
+#[derive(PartialEq, Debug)]
 pub enum SubsExpr {
-    Template(String, Box<SubsExpr>),
     Makro(String, String),
     MakroList(Vec<Box<SubsExpr>>),
     RegularList(Vec<Box<SubsExpr>>),
