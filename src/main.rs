@@ -8,6 +8,7 @@ mod ast;
 use options::Options;
 use makro::MacroSet;
 use std::io::Read;
+use std::collections::HashMap;
 
 fn main() {
     println!("Hello, world!");
@@ -49,11 +50,15 @@ fn grammar() {
     let t = grammar::parse_Expr("${t${TA}s${TEST}=}");
     println!("{:?}", t);
 
-    let res = expand_template("${TE${IN}}", vec![("TEST", "APA"), ("IN", "ST")]);
+    let mut subs = HashMap::new();
+    subs.extend(vec![("TEST", "APA"), ("IN", "ST")].into_iter());
+    let res = expand_template("${TE${IN}}", &subs);
     println!("{:?}", res);
     assert!(res == "APA", "Did not expand to APA");
 
-    let res = expand_template("${TE${IN=ST}}", vec![("TEST", "APA")]);
+    let mut subs = HashMap::new();
+    subs.extend(vec![("TEST", "APA")].into_iter());
+    let res = expand_template("${TE${IN=ST}}", &subs);
     println!("{:?}", res);
     assert!(res == "APA", "Did not expand to APA");
 }
