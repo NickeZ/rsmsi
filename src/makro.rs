@@ -1,24 +1,15 @@
 use std::collections::HashMap;
 
-
-pub type MacroSet = HashMap<String, Macro>;
+pub type MacroSet = HashMap<String, String>;
 
 #[derive(Debug)]
 pub enum Error {
     ParseError(String),
 }
 
+// Name, Value
 #[derive(Debug)]
-pub struct Macro {
-    // Name of the macro
-    pub name: String,
-
-    // Default value of the macro. E.g. $(TEST=default)
-    pub default: Option<String>,
-
-    // Value of the macro.
-    pub value: Option<String>,
-}
+pub struct Macro(String, String);
 
 /// Function to parse comma sperated macros , i.e. A=C,B=D
 pub fn parse_macros(input: &str) -> Result<MacroSet, Error> {
@@ -27,7 +18,7 @@ pub fn parse_macros(input: &str) -> Result<MacroSet, Error> {
         .map(parse_macro).collect::<Result<Vec<Option<Macro>>,_>>()?
         .into_iter()
         .filter_map(|m| m)
-        .map(|m| (m.name.clone(), m)));
+        .map(|m| (m.0, m.1)));
     Ok(result)
 }
 
@@ -44,11 +35,10 @@ fn parse_macro(input: &str) -> Result<Option<Macro>, Error> {
             if name.len() == 0 {
                 Err(Error::ParseError(String::from(input)))
             } else {
-                Ok(Some(Macro {name: String::from(name), default: None, value: Some(value)}))
+                Ok(Some(Macro (String::from(name),value)))
             }
         },
         None => Err(Error::ParseError(String::from(input))),
-        //None => Ok(Some(Macro {name: String::from(input), default: None, value: None})),
     }
 }
 
@@ -56,21 +46,18 @@ fn parse_macro(input: &str) -> Result<Option<Macro>, Error> {
 fn test_parse_macros_multi1() {
     let m = parse_macros("macro=value ,macro2=value").unwrap();
     let mut m = m.iter();
-    let (name, mak) =  m.next().unwrap();
-    let value = mak.value.clone().unwrap();
+    let (name, value) =  m.next().unwrap();
     // The order we get out the macros is undefined..
     if name == "macro" {
         assert!(name == "macro", format!("name was {:?}", name));
         assert!(value == "value", format!("value was {:?}", value));
-        let (name, mak) =  m.next().unwrap();
-        let value = mak.value.clone().unwrap();
+        let (name, value) =  m.next().unwrap();
         assert!(name == "macro2", format!("name was {:?}", name));
         assert!(value == "value", format!("value was {:?}", value));
     } else {
         assert!(name == "macro2", format!("name was {:?}", name));
         assert!(value == "value", format!("value was {:?}", value));
-        let (name, mak) =  m.next().unwrap();
-        let value = mak.value.clone().unwrap();
+        let (name, value) =  m.next().unwrap();
         assert!(name == "macro", format!("name was {:?}", name));
         assert!(value == "value", format!("value was {:?}", value));
     }
@@ -81,8 +68,7 @@ fn test_parse_macros_multi1() {
 fn test_parse_macros_multi2() {
     let m = parse_macros("macro=value ,macro=value2").unwrap();
     let mut m = m.iter();
-    let (name, mak) =  m.next().unwrap();
-    let value = mak.value.clone().unwrap();
+    let (name, value) =  m.next().unwrap();
     assert!(name == "macro", format!("name was {:?}", name));
     assert!(value == "value2", format!("value was {:?}", value));
     assert!(m.next().is_none());
@@ -92,8 +78,7 @@ fn test_parse_macros_multi2() {
 fn test_parse_macros_multi3() {
     let m = parse_macros("macro=value,,").unwrap();
     let mut m = m.iter();
-    let (name, mak) =  m.next().unwrap();
-    let value = mak.value.clone().unwrap();
+    let (name, value) =  m.next().unwrap();
     assert!(name == "macro", format!("name was {:?}", name));
     assert!(value == "value", format!("value was {:?}", value));
     assert!(m.next().is_none());
@@ -111,8 +96,7 @@ fn test_parse_macro_ws() {
         " macro = value ",
         "macro\t=\tvalue",
     ] {
-        let m = parse_macro(m).unwrap().unwrap();
-        let (name, value) = (m.name, m.value.unwrap());
+        let Macro(name, value) = parse_macro(m).unwrap().unwrap();
         assert!(name == "macro", format!("name was {:?}", name));
         assert!(value == "value", format!("value was {:?}", value));
     }
@@ -124,8 +108,7 @@ fn test_parse_macro_empty_string() {
         "macro=",
         " macro= ",
     ] {
-        let m = parse_macro(m).unwrap().unwrap();
-        let (name, value) = (m.name, m.value.unwrap());
+        let Macro(name, value) = parse_macro(m).unwrap().unwrap();
         assert!(name == "macro", format!("name was {:?}", name));
         assert!(value == "", format!("value was {:?}", value));
     }

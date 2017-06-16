@@ -4,11 +4,11 @@ mod options;
 mod makro;
 mod grammar;
 mod ast;
+mod parser;
 
 use options::Options;
-use makro::MacroSet;
 use std::io::Read;
-use std::collections::HashMap;
+use parser::expand_template;
 
 fn main() {
     println!("Hello, world!");
@@ -25,86 +25,8 @@ fn main() {
     let res = expand_template(&String::from_utf8(input).unwrap(), &options.macros);
 
     println!("{}", res);
-
-
     //println!("Sub {:?}", options.subfile);
     //println!("Makros {:?}", options.macros);
     //println!("Includes {:?}", options.includes);
 }
 
-#[test]
-fn grammar() {
-    let t = grammar::parse_Expr("${test}");
-    println!("{:?}", t);
-    assert!(t.unwrap() == Box::new(Expr::List(vec![Box::new(Expr::Makro(vec![Box::new(Expr::Final(String::from("test")))]))])));
-    let t = grammar::parse_Expr("${test}${test}");
-    println!("{:?}", t);
-    let t = grammar::parse_Expr("${${test}}");
-    println!("{:?}", t);
-    let t = grammar::parse_Expr("${test=sda}");
-    println!("{:?}", t);
-    let t = grammar::parse_Expr("${test=}");
-    println!("{:?}", t);
-    let t = grammar::parse_Expr("${tes${TEST}=}");
-    println!("{:?}", t);
-    let t = grammar::parse_Expr("${t${TA}s${TEST}=}");
-    println!("{:?}", t);
-
-    let mut subs = HashMap::new();
-    subs.extend(vec![("TEST", "APA"), ("IN", "ST")].into_iter());
-    let res = expand_template("${TE${IN}}", &subs);
-    println!("{:?}", res);
-    assert!(res == "APA", "Did not expand to APA");
-
-    let mut subs = HashMap::new();
-    subs.extend(vec![("TEST", "APA")].into_iter());
-    let res = expand_template("${TE${IN=ST}}", &subs);
-    println!("{:?}", res);
-    assert!(res == "APA", "Did not expand to APA");
-}
-
-fn expand_template(template: &str, macros: &MacroSet) -> String {
-    let t = grammar::parse_Expr(template).unwrap();
-    expand_template_priv(*t, macros)
-}
-
-use ast::Expr;
-
-fn expand_template_priv(item: Expr, macros: &MacroSet) -> String {
-    match item {
-        Expr::Makro(list) => {
-            let mut res = String::new();
-            for e in list {
-                res.push_str(&expand_template_priv(*e, macros));
-            }
-            if let Some(sub) = macros.get(&res) {
-                return sub.value.clone().unwrap();
-            }
-            String::from("undefined")
-        },
-        Expr::List(list) => {
-            let mut res = String::new();
-            for e in list {
-                res.push_str(&expand_template_priv(*e, macros));
-            }
-            res
-        },
-        Expr::MakroWithDefault(name_list, default_list) => {
-            let mut res = String::new();
-            for e in name_list {
-                res.push_str(&expand_template_priv(*e, macros));
-            }
-            if let Some(sub) = macros.get(&res) {
-                return sub.value.clone().unwrap();
-            }
-            res.clear();
-            for e in default_list {
-                res.push_str(&expand_template_priv(*e, macros));
-            }
-            res
-        }
-        Expr::Final(s) => {
-            s
-        },
-    }
-}
