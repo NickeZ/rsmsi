@@ -1,17 +1,58 @@
 use std::str::FromStr;
-use ast::Expr;
+use ast::SubsExpr;
 
 grammar;
+//pub TmplExpr: Vec<SubsExpr> = {
+//    Name,
+//};
 
-pub Expr: Box<Expr> = {
-    ExprTwo+ => Box::new(Expr::List(<>)),
+pub SubsExpr: Vec<Box<SubsExpr>> = {
+    File*
 };
 
-ExprTwo: Box<Expr> = {
-    Name => Box::new(Expr::Final(<>)),
-    "${" <ExprTwo+> "}" => Box::new(Expr::Makro(<>)),
-    "${" <ExprTwo+> "=}" => Box::new(Expr::MakroWithDefault(<>, vec![Box::new(Expr::Final(String::from("")))])),
-    "${" <l:ExprTwo+> "=" <r:ExprTwo+> "}" => Box::new(Expr::MakroWithDefault(l,r)),
+File: Box<SubsExpr> = {
+    "file" <Name> "{" <Matching> "}" => Box::new(SubsExpr::Template(<>)),
+    "\"" "file" "\"" <Name> "{" <Matching> "}" => Box::new(SubsExpr::Template(<>)),
 };
 
-Name: String = r"[A-Za-z0-9 ]+" => <>.to_string();
+Matching: Box<SubsExpr> = {
+    ExprRegular,
+    ExprPattern
+};
+
+Makro: Box<SubsExpr> = {
+    <Name> "=" <Name> => Box::new(SubsExpr::Makro(<>)),
+};
+
+ExprRegular: Box<SubsExpr> = {
+    ExprRegularInst+ => Box::new(SubsExpr::RegularList(<>))
+};
+
+ExprRegularInst: Box<SubsExpr> = {
+    "{" <Comma<Makro>> "}" => Box::new(SubsExpr::MakroList(<>)),
+};
+
+ExprPattern: Box<SubsExpr> = {
+    <ExprPatternDef> <ExprPatternInst+> => Box::new(SubsExpr::PatternList(<>)),
+};
+
+ExprPatternDef: Box<SubsExpr> = {
+    "pattern" "{" <Comma<Name>> "}" => Box::new(SubsExpr::PatternListDef(<>)),
+};
+
+ExprPatternInst: Box<SubsExpr> = {
+    "{" <Comma<Name>> "}" => Box::new(SubsExpr::PatternListInst(<>)),
+};
+
+Name: String = r"[A-Za-z0-9]+" => <>.to_string();
+
+Comma<T>: Vec<T> = {
+    <v:(<T> ",")*> <e:T?> => match e {
+        None => v,
+        Some(e) => {
+            let mut v = v;
+            v.push(e);
+            v
+        }
+    }
+};
