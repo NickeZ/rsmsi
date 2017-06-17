@@ -2,9 +2,6 @@ use std::str::FromStr;
 use ast::{SubsExpr, Template};
 
 grammar;
-//pub TmplExpr: Vec<SubsExpr> = {
-//    Name,
-//};
 
 pub SubsExpr: Vec<Box<Template>> = {
     File*
@@ -12,7 +9,7 @@ pub SubsExpr: Vec<Box<Template>> = {
 
 File: Box<Template> = {
     "file" <Name> "{" <Matching> "}" => Box::new(Template(<>)),
-    "file" "\"" <Name> "\"" "{" <Matching> "}" => Box::new(Template(<>)),
+    "file" r#"""# <Name> r#"""# "{" <Matching> "}" => Box::new(Template(<>)),
 };
 
 Matching: Box<SubsExpr> = {

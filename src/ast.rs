@@ -1,8 +1,10 @@
 #[derive(PartialEq, Debug)]
 pub enum TmplExpr {
     Include(String),
-    Substitute(Vec<(String, String)>),
+    Substitute(Vec<(Vec<Box<TmplExpr>>, Vec<Box<TmplExpr>>)>),
     Text(String),
+    Makro(Vec<Box<TmplExpr>>),
+    MakroWithDefault(Vec<Box<TmplExpr>>, Vec<Box<TmplExpr>>),
 }
 
 #[derive(PartialEq, Debug)]

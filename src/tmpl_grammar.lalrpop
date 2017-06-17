@@ -1,0 +1,41 @@
+use std::str::FromStr;
+use ast::{TmplExpr};
+
+grammar;
+
+pub TmplExpr: Vec<Box<TmplExpr>> = {
+    TmplExprTwo+,
+};
+
+TmplExprTwo: Box<TmplExpr> = {
+    "include" r#"""# <Lit> r#"""# => Box::new(TmplExpr::Include(<>)),
+    "substitute" r#"""# <Comma<Sub>> r#"""# => Box::new(TmplExpr::Substitute(<>)),
+    TmplExprThree,
+};
+
+TmplExprThree: Box<TmplExpr> = {
+    "${" <TmplExprThree+> "}" => Box::new(TmplExpr::Makro(<>)),
+    "${" <TmplExprThree+> "=}" => Box::new(TmplExpr::MakroWithDefault(<>, vec![Box::new(TmplExpr::Text(String::from("")))])),
+    "${" <TmplExprThree+> "=" <TmplExprThree+> "}" => Box::new(TmplExpr::MakroWithDefault(<>)),
+    "$(" <TmplExprThree+> ")" => Box::new(TmplExpr::Makro(<>)),
+    "$(" <TmplExprThree+> "=)" => Box::new(TmplExpr::MakroWithDefault(<>, vec![Box::new(TmplExpr::Text(String::from("")))])),
+    "$(" <TmplExprThree+> "=" <TmplExprThree+> ")" => Box::new(TmplExpr::MakroWithDefault(<>)),
+    Lit => Box::new(TmplExpr::Text(<>)),
+};
+
+Sub: (Vec<Box<TmplExpr>>, Vec<Box<TmplExpr>>) = {
+    <TmplExprThree+> "=" <TmplExprThree+>,
+};
+
+Lit: String = r#"[a-zA-Z0-9]+"# => <>.to_string();
+
+Comma<T>: Vec<T> = {
+    <v:(<T> ",")*> <e:T?> => match e {
+        None => v,
+        Some(e) => {
+            let mut v = v;
+            v.push(e);
+            v
+        }
+    }
+};

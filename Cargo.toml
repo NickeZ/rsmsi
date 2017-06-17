@@ -10,4 +10,3 @@ lalrpop = "0.13.0"
 clap = "2.24.2"
 lalrpop-util = "0.13.0"
 regex = "0.2.1"
-

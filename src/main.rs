@@ -1,8 +1,10 @@
 extern crate clap;
 
+mod grammar;
+mod tmpl_grammar;
+
 mod options;
 mod makro;
-mod grammar;
 mod ast;
 mod parser;
 
