@@ -107,52 +107,52 @@ fn test_subs() {
 }
 
 pub fn expand_template(template: &str, macros: &MacroSet) -> String {
-    unimplemented!()
+    let t = parse_TmplExpr(template).unwrap();
+    let mut res = String::new();
+    for t in t {
+        res.push_str(expand_template_priv(*t, macros).as_str());
+    }
+    res
 }
-//pub fn expand_template(template: &str, macros: &MacroSet) -> String {
-//    let t = parse_Expr(template).unwrap();
-//    expand_template_priv(*t, macros)
-//}
-//
-//fn expand_template_priv(item: Expr, macros: &MacroSet) -> String {
-//    match item {
-//        Expr::Makro(list) => {
-//            let mut res = String::new();
-//            for e in list {
-//                res.push_str(&expand_template_priv(*e, macros));
-//            }
-//            if let Some(sub) = macros.get(&res) {
-//                return sub.clone();
-//            }
-//            String::from("undefined")
-//        },
-//        Expr::List(list) => {
-//            let mut res = String::new();
-//            for e in list {
-//                res.push_str(&expand_template_priv(*e, macros));
-//            }
-//            res
-//        },
-//        Expr::MakroWithDefault(name_list, default_list) => {
-//            let mut res = String::new();
-//            for e in name_list {
-//                res.push_str(&expand_template_priv(*e, macros));
-//            }
-//            if let Some(sub) = macros.get(&res) {
-//                return sub.clone();
-//            }
-//            res.clear();
-//            for e in default_list {
-//                res.push_str(&expand_template_priv(*e, macros));
-//            }
-//            res
-//        }
-//        Expr::Final(s) => {
-//            s
-//        },
-//    }
-//}
-//
+
+fn expand_template_priv(item: TmplExpr, macros: &MacroSet) -> String {
+    match item {
+        TmplExpr::Makro(list) => {
+            let mut res = String::new();
+            for e in list {
+                res.push_str(&expand_template_priv(*e, macros));
+            }
+            if let Some(sub) = macros.get(&res) {
+                return sub.clone();
+            }
+            String::from("undefined")
+        },
+        TmplExpr::MakroWithDefault(name_list, default_list) => {
+            let mut res = String::new();
+            for e in name_list {
+                res.push_str(&expand_template_priv(*e, macros));
+            }
+            if let Some(sub) = macros.get(&res) {
+                return sub.clone();
+            }
+            res.clear();
+            for e in default_list {
+                res.push_str(&expand_template_priv(*e, macros));
+            }
+            res
+        }
+        TmplExpr::Text(s) => {
+            s
+        },
+        TmplExpr::Substitute(v) => {
+            String::from("")
+        }
+        TmplExpr::Include(file) => {
+            String::from("")
+        }
+    }
+}
+
 #[test]
 fn macro_expansion_test() {
     let t = parse_TmplExpr("${test}");
@@ -160,6 +160,8 @@ fn macro_expansion_test() {
     let t = parse_TmplExpr("substitute \"test=${te}st, test${2}=val\"");
     println!("{:?}", t);
     //assert!(t.unwrap() == Box::new(Expr::List(vec![Box::new(Expr::Makro(vec![Box::new(Expr::Final(String::from("test")))]))])));
+    let t = parse_TmplExpr("${t e s t }");
+    println!("{:?}", t);
     let t = parse_TmplExpr("${test}${test}");
     println!("{:?}", t);
     let t = parse_TmplExpr("${${test}}");
@@ -173,15 +175,21 @@ fn macro_expansion_test() {
     let t = parse_TmplExpr("${t${TA}s${TEST}=}");
     println!("{:?}", t);
 
-    //let mut subs = HashMap::new();
-    //subs.extend(vec![(String::from("TEST"), String::from("APA")), (String::from("IN"), String::from("ST"))].into_iter());
-    //let res = expand_template("${TE${IN}}", &subs);
-    //println!("{:?}", res);
-    //assert!(res == "APA", "Did not expand to APA");
+    let mut subs = HashMap::new();
+    subs.extend(vec![(String::from("TEST"), String::from("APA")), (String::from("IN"), String::from("ST"))].into_iter());
+    let res = expand_template("${TE${IN}}", &subs);
+    println!("{:?}", res);
+    assert!(res == "APA", "Did not expand to APA");
 
-    //let mut subs = HashMap::new();
-    //subs.extend(vec![(String::from("TEST"), String::from("APA"))].into_iter());
-    //let res = expand_template("${TE${IN=ST}}", &subs);
-    //println!("{:?}", res);
-    //assert!(res == "APA", "Did not expand to APA");
+    let mut subs = HashMap::new();
+    subs.extend(vec![(String::from("TEST"), String::from("APA"))].into_iter());
+    let res = expand_template("${TE${IN=ST}}", &subs);
+    println!("{:?}", res);
+    assert!(res == "APA", "Did not expand to APA");
+
+    let mut subs = HashMap::new();
+    subs.extend(vec![(String::from("TEST"), String::from("APA"))].into_iter());
+    let res = expand_template("substitute \"hej=da\" hej ${TE${IN=ST}}", &subs);
+    println!("{:?}", res);
+    assert!(res == "APA", "Did not expand to APA");
 }
