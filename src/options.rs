@@ -109,6 +109,9 @@ impl Options {
                 options.subfile = Some(subfile);
             }
         }
+        if let Some(infile) = matches.value_of("template") {
+            options.infile = Some(PathBuf::from(infile));
+        }
 
         Ok(options)
     }

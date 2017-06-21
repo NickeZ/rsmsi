@@ -108,6 +108,10 @@ fn test_subs() {
 }
 
 pub fn expand_template(template: &str, macros: &MacroSet) -> String {
+    //let l = lexer::Lexer::new(template);
+    //for l in l {
+    //    println!("{:?}", l);
+    //}
     let l = lexer::Lexer::new(template);
     let t = parse_TmplExpr(l).unwrap();
     let mut res = String::new();

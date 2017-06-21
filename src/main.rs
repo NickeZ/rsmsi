@@ -14,8 +14,6 @@ use std::io::Read;
 use parser::expand_template;
 
 fn main() {
-    println!("Hello, world!");
-
     let options = Options::parse_args().expect("Failed to parse options");
 
     let mut input = Vec::new();
@@ -27,7 +25,7 @@ fn main() {
 
     let res = expand_template(&String::from_utf8(input).unwrap(), &options.macros);
 
-    println!("{}", res);
+    print!("{}", res);
     //println!("Sub {:?}", options.subfile);
     //println!("Makros {:?}", options.macros);
     //println!("Includes {:?}", options.includes);

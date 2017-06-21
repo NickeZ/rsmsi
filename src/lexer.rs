@@ -57,6 +57,7 @@ impl<'input> Lexer<'input> {
         }
         false
     }
+
     fn keyword_match(&mut self, keyword: &str, token: Tok<'input>, i:usize) -> Option<Spanned<Tok<'input>, usize, LexicalError>> {
         let ahead = self.chars.as_str().chars();
         let mut match_str = keyword[1..].chars();
@@ -75,6 +76,22 @@ impl<'input> Lexer<'input> {
             }
         }
         None
+    }
+
+    fn is_next_special_char(&mut self) -> bool {
+        let mut ahead = self.chars.as_str().chars();
+        let invalid = SPECIAL_CHARS.chars();
+        match ahead.next() {
+            Some(c) => {
+                for g in invalid {
+                    if c == g {
+                        return true
+                    }
+                }
+            },
+            None => {},
+        }
+        false
     }
 }
 
@@ -116,7 +133,7 @@ impl<'input> Iterator for Lexer<'input> {
                         ' ' => return Some(Ok((i, Tok::Space, i+1))),
                         '\t' => return Some(Ok((i, Tok::Tab, i+1))),
                         c => {
-                            //println!("text {} {:?}", c, first_text);
+                            //println!("text {} {:?}", c, collect);
                             match c {
                                 'i' => {
                                     if let Some(res) = self.keyword_match(KEYWORDS[0], Tok::CommandInclude, i) {
@@ -124,6 +141,11 @@ impl<'input> Iterator for Lexer<'input> {
                                     } else {
                                         if collect.is_none() {
                                             collect = Some((i, current));
+                                        }
+                                        if self.is_next_special_char() {
+                                            let (idx, chars_start) = collect.unwrap();
+                                            //println!("1 {}", i+1-idx);
+                                            return Some(Ok((idx, Tok::Text(&chars_start[..i+1-idx]), i+1)));
                                         }
                                     }
                                 },
@@ -134,25 +156,21 @@ impl<'input> Iterator for Lexer<'input> {
                                         if collect.is_none() {
                                             collect = Some((i, current));
                                         }
+                                        if self.is_next_special_char() {
+                                            let (idx, chars_start) = collect.unwrap();
+                                            //println!("1 {}", i+1-idx);
+                                            return Some(Ok((idx, Tok::Text(&chars_start[..i+1-idx]), i+1)));
+                                        }
                                     }
                                 },
                                 _ => {
                                     if collect.is_none() {
                                         collect = Some((i, current));
                                     }
-                                    let mut ahead = self.chars.as_str().chars();
-                                    let invalid = SPECIAL_CHARS.chars();
-                                    match ahead.next() {
-                                        Some(c) => {
-                                            for g in invalid {
-                                                if c == g {
-                                                    let (idx, chars_start) = collect.unwrap();
-                                                    //println!("1 {}", i+1-idx);
-                                                    return Some(Ok((idx, Tok::Text(&chars_start[..i+1-idx]), i+1)));
-                                                }
-                                            }
-                                        },
-                                        None => {},
+                                    if self.is_next_special_char() {
+                                        let (idx, chars_start) = collect.unwrap();
+                                        //println!("1 {}", i+1-idx);
+                                        return Some(Ok((idx, Tok::Text(&chars_start[..i+1-idx]), i+1)));
                                     }
                                     if self.lookahead_keywords() {
                                         let (idx, chars_start) = collect.unwrap();
