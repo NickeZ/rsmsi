@@ -3,10 +3,10 @@ use std::iter::Peekable;
 
 pub type Spanned<Tok, Loc, Error> = Result<(Loc, Tok, Loc), Error>;
 
-const SPECIAL_CHARS: &str = "\n\"=, \tis${}()";
-const KEYWORDS: &[&str] = &["include", "substitute"];
+const SPECIAL_CHARS: &str = "\n\"=, \t${}()";
+const KEYWORDS: &[&str] = &["include", "substitute", "${", "$("];
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Tok {
     Text,
     Newline,
@@ -38,6 +38,24 @@ impl<'input> Lexer<'input> {
         Lexer { chars: input.char_indices() }
     }
 
+    /// Returns true if any keyword is found
+    fn lookahead_keywords(&mut self) -> bool {
+        for keyword in KEYWORDS {
+            let mut ahead = self.chars.as_str().chars();
+            for kc in keyword.chars() {
+                let ac = ahead.next();
+                match ac {
+                    Some(ac) => {
+                        if kc != ac {
+                            break;
+                        }
+                    },
+                    None => return true,
+                }
+            }
+        }
+        false
+    }
     fn keyword_match(&mut self, keyword: &str, token: Tok, i:usize) -> Option<Spanned<Tok, usize, LexicalError>> {
         let ahead = self.chars.as_str().chars();
         let mut match_str = keyword[1..].chars();
@@ -130,14 +148,22 @@ impl<'input> Iterator for Lexer<'input> {
                                                 }
                                             }
                                         },
-                                        None => continue,
+                                        None => {},
+                                    }
+                                    if self.lookahead_keywords() {
+                                        return Some(Ok((collect.unwrap(), Tok::Text, i+1)));
                                     }
                                 }
                             }
                         },
                     }
                 },
-                None => return None,
+                None => {
+                    if let Some(collect) = collect {
+                        return Some(Ok((collect, Tok::Text, collect+1)))
+                    }
+                    return None
+                },
             }
         }
     }
@@ -145,24 +171,41 @@ impl<'input> Iterator for Lexer<'input> {
 
 #[test]
 fn test_lexer() {
-    let stim = "my test $(hej) ${hej} ${he${hej}} $ test $test include inc substitute s";
-    let lex = Lexer::new(stim);
-    println!("{}", stim);
-    for l in lex {
-        println!("{:?} ", l);
-    }
+    //let stim = "my test $(hej) ${hej} ${he${hej}} $ test $test include inc substitute s";
+    //let lex = Lexer::new(stim);
+    //println!("{}", stim);
+    //for l in lex {
+    //    println!("{:?} ", l);
+    //}
     let stim = "include \"file.tmp\"";
-    let lex = Lexer::new(stim);
-    println!("{}", stim);
-    for l in lex {
-        println!("{:?} ", l);
-    }
+    let mut lex = Lexer::new(stim);
+    assert!(lex.next().unwrap().unwrap() == ((0, Tok::CommandInclude, 7)));
+    assert!(lex.next().unwrap().unwrap() == ((7, Tok::Space, 8)));
+    assert!(lex.next().unwrap().unwrap() == ((8, Tok::Quote, 9)));
+    assert!(lex.next().unwrap().unwrap() == ((9, Tok::Text, 17)));
+    assert!(lex.next().unwrap().unwrap() == ((17, Tok::Quote, 18)));
+    //println!("{}", stim);
+    //for l in lex {
+    //    println!("{:?} ", l);
+    //}
     let stim = "substitute \"mak1=val1, mak2=val2\"";
-    let lex = Lexer::new(stim);
-    println!("{}", stim);
-    for l in lex {
-        println!("{:?} ", l);
-    }
+    let mut lex = Lexer::new(stim);
+    assert!(lex.next().unwrap().unwrap() == ((0, Tok::CommandSubstitute, 10)));
+    assert!(lex.next().unwrap().unwrap() == ((10, Tok::Space, 11)));
+    assert!(lex.next().unwrap().unwrap() == ((11, Tok::Quote, 12)));
+    assert!(lex.next().unwrap().unwrap() == ((12, Tok::Text, 16)));
+    assert!(lex.next().unwrap().unwrap() == ((16, Tok::Equals, 17)));
+    assert!(lex.next().unwrap().unwrap() == ((17, Tok::Text, 21)));
+    assert!(lex.next().unwrap().unwrap() == ((21, Tok::Comma, 22)));
+    assert!(lex.next().unwrap().unwrap() == ((22, Tok::Space, 23)));
+    assert!(lex.next().unwrap().unwrap() == ((23, Tok::Text, 27)));
+    assert!(lex.next().unwrap().unwrap() == ((27, Tok::Equals, 28)));
+    assert!(lex.next().unwrap().unwrap() == ((28, Tok::Text, 32)));
+    assert!(lex.next().unwrap().unwrap() == ((32, Tok::Quote, 33)));
+    //println!("{}", stim);
+    //for l in lex {
+    //    println!("{:?} ", l);
+    //}
     let stim = "substitute \t\"mak1=val1,\tmak2=val2\"";
     let lex = Lexer::new(stim);
     println!("{}", stim);
