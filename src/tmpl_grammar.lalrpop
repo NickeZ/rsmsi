@@ -9,8 +9,8 @@ pub TmplExpr: Vec<Box<TmplExpr>> = {
 };
 
 TmplExprTwo: Box<TmplExpr> = {
-    "include" r#"""# <Lit> r#"""# => Box::new(TmplExpr::Include(<>)),
-    "substitute" r#"""# <Comma<Sub>> r#"""# => Box::new(TmplExpr::Substitute(<>)),
+    "include" Whitespace+ r#"""# <Lit> r#"""# => Box::new(TmplExpr::Include(<>)),
+    "substitute" Whitespace+ r#"""# <Comma<Sub>> r#"""# => Box::new(TmplExpr::Substitute(<>)),
     TmplExprThree,
 };
 
@@ -23,6 +23,8 @@ TmplExprThree: Box<TmplExpr> = {
     "$(" <TmplExprThree+> "=" <TmplExprThree+> ")" => Box::new(TmplExpr::MakroWithDefault(<>)),
     Lit => Box::new(TmplExpr::Text(<>)),
     Space => Box::new(TmplExpr::Text(<>)),
+    Tab => Box::new(TmplExpr::Text(<>)),
+    Newline => Box::new(TmplExpr::Text(<>)),
 };
 
 Sub: (Vec<Box<TmplExpr>>, Vec<Box<TmplExpr>>) = {
@@ -32,6 +34,13 @@ Sub: (Vec<Box<TmplExpr>>, Vec<Box<TmplExpr>>) = {
 Lit: String = r#".*"# => <>.to_string();
 
 Space: String = " " => " ".to_string();
+Tab: String = "\t" => "\t".to_string();
+Newline: String = "\n" => "\n".to_string();
+
+Whitespace = {
+    Space,
+    Tab,
+};
 
 Comma<T>: Vec<T> = {
     <v:(<T> ",")*> <e:T?> => match e {

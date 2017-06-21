@@ -147,7 +147,7 @@ impl<'input> Iterator for Lexer<'input> {
                                             for g in invalid {
                                                 if c == g {
                                                     let (idx, chars_start) = collect.unwrap();
-                                                    println!("1 {}", i+1-idx);
+                                                    //println!("1 {}", i+1-idx);
                                                     return Some(Ok((idx, Tok::Text(&chars_start[..i+1-idx]), i+1)));
                                                 }
                                             }
@@ -156,7 +156,7 @@ impl<'input> Iterator for Lexer<'input> {
                                     }
                                     if self.lookahead_keywords() {
                                         let (idx, chars_start) = collect.unwrap();
-                                        println!("2 {}", i+1-idx);
+                                        //println!("2 {}", i+1-idx);
                                         return Some(Ok((idx, Tok::Text(&chars_start[..i+1]), i+1-idx)));
                                     }
                                 }
@@ -166,7 +166,7 @@ impl<'input> Iterator for Lexer<'input> {
                 },
                 None => {
                     if let Some((idx, chars_start)) = collect {
-                        println!("3 {}", 1);
+                        //println!("3 {}", 1);
                         return Some(Ok((idx, Tok::Text(&chars_start[..]), idx + chars_start.len())))
                     }
                     return None
