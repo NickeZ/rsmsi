@@ -157,25 +157,25 @@ fn expand_template_priv(item: TmplExpr, macros: &MacroSet) -> String {
 
 #[test]
 fn macro_expansion_test() {
-    let t = parse_TmplExpr("${test}");
-    println!("{:?}", t);
-    let t = parse_TmplExpr("substitute \"test=${te}st, test${2}=val\"");
-    println!("{:?}", t);
-    //assert!(t.unwrap() == Box::new(Expr::List(vec![Box::new(Expr::Makro(vec![Box::new(Expr::Final(String::from("test")))]))])));
-    let t = parse_TmplExpr("${t e s t }");
-    println!("{:?}", t);
-    let t = parse_TmplExpr("${test}${test}");
-    println!("{:?}", t);
-    let t = parse_TmplExpr("${${test}}");
-    println!("{:?}", t);
-    let t = parse_TmplExpr("${test=sda}");
-    println!("{:?}", t);
-    let t = parse_TmplExpr("${test=}");
-    println!("{:?}", t);
-    let t = parse_TmplExpr("${tes${TEST}=}");
-    println!("{:?}", t);
-    let t = parse_TmplExpr("${t${TA}s${TEST}=}");
-    println!("{:?}", t);
+    //let t = parse_TmplExpr("${test}");
+    //println!("{:?}", t);
+    //let t = parse_TmplExpr("substitute \"test=${te}st, test${2}=val\"");
+    //println!("{:?}", t);
+    ////assert!(t.unwrap() == Box::new(Expr::List(vec![Box::new(Expr::Makro(vec![Box::new(Expr::Final(String::from("test")))]))])));
+    //let t = parse_TmplExpr("${t e s t }");
+    //println!("{:?}", t);
+    //let t = parse_TmplExpr("${test}${test}");
+    //println!("{:?}", t);
+    //let t = parse_TmplExpr("${${test}}");
+    //println!("{:?}", t);
+    //let t = parse_TmplExpr("${test=sda}");
+    //println!("{:?}", t);
+    //let t = parse_TmplExpr("${test=}");
+    //println!("{:?}", t);
+    //let t = parse_TmplExpr("${tes${TEST}=}");
+    //println!("{:?}", t);
+    //let t = parse_TmplExpr("${t${TA}s${TEST}=}");
+    //println!("{:?}", t);
 
     let mut subs = HashMap::new();
     subs.extend(vec![(String::from("TEST"), String::from("APA")), (String::from("IN"), String::from("ST"))].into_iter());

@@ -2,7 +2,7 @@ use std::str::FromStr;
 use ast::{TmplExpr};
 use lexer;
 
-grammar;
+grammar<'input>;
 
 pub TmplExpr: Vec<Box<TmplExpr>> = {
     TmplExprTwo+,
@@ -46,8 +46,8 @@ extern {
     type Error = lexer::LexicalError;
 
 
-    enum lexer::Tok {
-        r#".*"# => lexer::Tok::Text,
+    enum lexer::Tok<'input> {
+        r#".*"# => lexer::Tok::Text(<&'input str>),
         "\n" => lexer::Tok::Newline,
         r#"""# => lexer::Tok::Quote,
         "=" => lexer::Tok::Equals,
