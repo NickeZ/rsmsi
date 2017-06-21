@@ -189,7 +189,13 @@ fn macro_expansion_test() {
 
     let mut subs = HashMap::new();
     subs.extend(vec![(String::from("TEST"), String::from("APA"))].into_iter());
-    let res = expand_template("substitute \"hej=da\" hej ${TE${IN=ST}}", &subs);
+    let res = expand_template("detta ar en random text", &subs);
     println!("{:?}", res);
-    assert!(res == "APA", "Did not expand to APA");
+    assert!(res == "detta ar en random text", "Did not expand");
+
+    let mut subs = HashMap::new();
+    subs.extend(vec![(String::from("TEST"), String::from("APA"))].into_iter());
+    let res = expand_template("substitute \"hej=da\"\n hej ${TE${IN=ST}}", &subs);
+    println!("{:?}", res);
+    assert!(res == "hej APA", "Did not expand to APA");
 }

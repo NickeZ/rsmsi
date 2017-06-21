@@ -27,7 +27,7 @@ Sub: (Vec<Box<TmplExpr>>, Vec<Box<TmplExpr>>) = {
     <TmplExprThree+> "=" <TmplExprThree+>,
 };
 
-Lit: String = r#"[a-zA-Z0-9]+"# => <>.to_string();
+Lit: String = r#"[a-zA-Z0-9]*"# => <>.to_string();
 
 Comma<T>: Vec<T> = {
     <v:(<T> ",")*> <e:T?> => match e {

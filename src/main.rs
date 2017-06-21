@@ -7,6 +7,7 @@ mod options;
 mod makro;
 mod ast;
 mod parser;
+mod lexer;
 
 use options::Options;
 use std::io::Read;
