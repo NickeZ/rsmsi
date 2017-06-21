@@ -22,6 +22,7 @@ TmplExprThree: Box<TmplExpr> = {
     "$(" <TmplExprThree+> "=" ")" => Box::new(TmplExpr::MakroWithDefault(<>, vec![Box::new(TmplExpr::Text(String::from("")))])),
     "$(" <TmplExprThree+> "=" <TmplExprThree+> ")" => Box::new(TmplExpr::MakroWithDefault(<>)),
     Lit => Box::new(TmplExpr::Text(<>)),
+    Space => Box::new(TmplExpr::Text(<>)),
 };
 
 Sub: (Vec<Box<TmplExpr>>, Vec<Box<TmplExpr>>) = {
@@ -29,6 +30,8 @@ Sub: (Vec<Box<TmplExpr>>, Vec<Box<TmplExpr>>) = {
 };
 
 Lit: String = r#".*"# => <>.to_string();
+
+Space: String = " " => " ".to_string();
 
 Comma<T>: Vec<T> = {
     <v:(<T> ",")*> <e:T?> => match e {

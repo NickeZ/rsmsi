@@ -41,11 +41,12 @@ impl<'input> Lexer<'input> {
     /// Returns true if any keyword is found
     fn lookahead_keywords(&mut self) -> bool {
         for keyword in KEYWORDS {
-            let mut ahead = self.chars.as_str().chars();
-            for kc in keyword.chars() {
-                let ac = ahead.next();
-                match ac {
-                    Some(ac) => {
+            let ahead = self.chars.as_str().chars();
+            let mut kc = keyword.chars();
+            for ac in ahead {
+                let kc = kc.next();
+                match kc {
+                    Some(kc) => {
                         if kc != ac {
                             break;
                         }
@@ -146,6 +147,7 @@ impl<'input> Iterator for Lexer<'input> {
                                             for g in invalid {
                                                 if c == g {
                                                     let (idx, chars_start) = collect.unwrap();
+                                                    println!("1 {}", i+1-idx);
                                                     return Some(Ok((idx, Tok::Text(&chars_start[..i+1-idx]), i+1)));
                                                 }
                                             }
@@ -154,6 +156,7 @@ impl<'input> Iterator for Lexer<'input> {
                                     }
                                     if self.lookahead_keywords() {
                                         let (idx, chars_start) = collect.unwrap();
+                                        println!("2 {}", i+1-idx);
                                         return Some(Ok((idx, Tok::Text(&chars_start[..i+1]), i+1-idx)));
                                     }
                                 }
@@ -163,7 +166,8 @@ impl<'input> Iterator for Lexer<'input> {
                 },
                 None => {
                     if let Some((idx, chars_start)) = collect {
-                        return Some(Ok((idx, Tok::Text(&chars_start[..1]), idx+1)))
+                        println!("3 {}", 1);
+                        return Some(Ok((idx, Tok::Text(&chars_start[..]), idx + chars_start.len())))
                     }
                     return None
                 },
