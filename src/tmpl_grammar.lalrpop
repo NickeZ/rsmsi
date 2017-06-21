@@ -74,3 +74,5 @@ extern {
         ")" => lexer::Tok::MacroPaEnd,
     }
 }
+
+// vim: ft=rust

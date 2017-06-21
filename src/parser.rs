@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use std::io::Read;
 
 use makro::MacroSet;
-use ast::{TmplExpr, SubsExpr, Template};
+use ast::{TmplExpr, SubsExpr, SubsListType, Template};
 //use grammar::{parse_TmplExpr, parse_SubsExpr};
 use grammar::{parse_SubsExpr};
 use tmpl_grammar::{parse_TmplExpr};
@@ -57,15 +57,48 @@ fn find_matching(input: &[u8], open: u8, close: u8) -> Result<usize, ()>
 
 pub fn expand_subs(subs: &str) -> String {
     let mut res = String::new();
-    for file in parse_subs(subs) {
+    for file in parse_SubsExpr(subs).unwrap() {
         let pair = *file; // Work around a bug. See issue #16223
         let Template(filename, macros) = pair;
         let mut fh = File::open(filename).unwrap();
         let mut buf = Vec::new();
         fh.read_to_end(&mut buf).unwrap();
-        res.push_str(&String::from_utf8(buf).unwrap());
+        let template = String::from_utf8(buf).unwrap();
+        let macros_v = create_hashmap(*macros);
+        for macros in macros_v {
+            let expanded = expand_template(&template, &macros);
+            res.push_str(expanded.as_str());
+        }
     }
     res
+}
+
+fn create_hashmap(expr: SubsListType) -> Vec<MacroSet> {
+    match expr {
+        SubsListType::RegularList(macro_sets) => {
+            let mut res = Vec::new();
+            for macros in macro_sets {
+                let mut hm = HashMap::new();
+                for (k, v) in macros {
+                    hm.insert(k, v);
+                }
+                res.push(hm);
+            }
+            return res
+        },
+        SubsListType::PatternList(macros_def, macros_val_sets) => {
+            println!("macros {:?}", macros_def);
+            let mut res = Vec::new();
+            for macros_val in macros_val_sets {
+                let mut hm = HashMap::new();
+                for (i, v) in macros_val.into_iter().enumerate() {
+                    hm.insert(macros_def[i].clone(), v);
+                }
+                res.push(hm);
+            }
+            return res
+        },
+    }
 }
 
 #[test]
@@ -78,32 +111,32 @@ fn test_find_matching() {
     assert!(find_matching_paren(b" $( ) $( $( ) ) )") == Ok(16));
 }
 
-fn parse_subs(subs: &str) -> Vec<Box<Template>> {
-    parse_SubsExpr(subs).unwrap()
-}
-
 #[test]
 fn test_expand_subs() {
-    let s = expand_subs("file test {{firstname=bob, mak2=val2}}");
+    let s = expand_subs("file test/test1 {{name=bob, mak2=val2}}");
+    println!("{:?}", s);
+    let s = expand_subs("file test/test1 {pattern{name, mak2} {bob, 1} {ben, 2}}");
+    println!("{:?}", s);
+    //let s = expand_subs("file test/test1 {pattern{name, mak2} {bob, ${test}} {ben, 2}}");
     //println!("{:?}", s);
 }
 
 #[test]
 fn test_subs() {
-    let s = parse_subs("file test {{mak1=val1, mak2=val2}}");
+    let s = parse_SubsExpr("file test/test1 {{mak1=val1, mak2=val2}}");
     //println!("{:?}", s);
-    let s = parse_subs("file test {{mak1=val1, mak2=val2}{mak1=val3, mak2=val4}}");
+    let s = parse_SubsExpr("file test/test1 {{mak1=val1, mak2=val2}{mak1=val3, mak2=val4}}");
     //println!("{:?}", s);
-    let s = parse_subs("file \"test\" { pattern {mak1, mak2} {val1, val2}}");
+    let s = parse_SubsExpr("file \"test/test1\" { pattern {mak1, mak2} {val1, val2}}");
     //println!("{:?}", s);
-    let s = parse_subs("file \"test\" {{mak1=val1, mak2=val2}}");
+    let s = parse_SubsExpr("file \"test/test1\" {{mak1=val1, mak2=val2}}");
     //println!("{:?}", s);
-    let s = parse_subs("file test {pattern{mak1, mak2}{val1, val2}}");
+    let s = parse_SubsExpr("file test/test1 {pattern{mak1, mak2}{val1, val2}}");
     //println!("{:?}", s);
-    let s = parse_subs("file test {pattern{mak1, mak2}{val1, val2}{val3,val4}}");
+    let s = parse_SubsExpr("file test/test1 {pattern{mak1, mak2}{val1, val2}{val3,val4}}");
     //println!("{:?}", s);
 
-    let s = parse_subs("file test {{mak1=val1}} file test {{mak1=val2}}");
+    let s = parse_SubsExpr("file test/test1 {{mak1=val1}} file test/test1 {{mak1=val2}}");
     //println!("{:?}", s);
 }
 
@@ -131,7 +164,7 @@ fn expand_template_priv(item: TmplExpr, macros: &MacroSet) -> String {
             if let Some(sub) = macros.get(&res) {
                 return sub.clone();
             }
-            String::from("undefined")
+            String::from(format!("${{{},undefined}}", res))
         },
         TmplExpr::MakroWithDefault(name_list, default_list) => {
             let mut res = String::new();
@@ -204,4 +237,10 @@ fn macro_expansion_test() {
     let res = expand_template("substitute \"hej=da\"hej ${TE${IN=ST}}", &subs);
     println!("{:?}", res);
     assert!(res == "hej APA", "Did not expand to APA");
+
+    let mut subs = HashMap::new();
+    subs.extend(vec![(String::from("P"), String::from("Q"))].into_iter());
+    let res = expand_template("${P=${P}}", &subs);
+    println!("{:?}", res);
+    assert!(res == "Q", "Did not expand to Q");
 }

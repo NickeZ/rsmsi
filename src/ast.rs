@@ -8,15 +8,16 @@ pub enum TmplExpr {
 }
 
 #[derive(PartialEq, Debug)]
-pub struct Template(pub String, pub Box<SubsExpr>);
+pub struct Template(pub String, pub Box<SubsListType>);
+
+#[derive(PartialEq, Debug)]
+pub enum SubsListType {
+    RegularList(Vec<Vec<(String, String)>>),
+    PatternList(Vec<String>, Vec<Vec<String>>),
+}
 
 #[derive(PartialEq, Debug)]
 pub enum SubsExpr {
-    Makro(String, String),
-    MakroList(Vec<Box<SubsExpr>>),
-    RegularList(Vec<Box<SubsExpr>>),
-    PatternList(Box<SubsExpr>, Vec<Box<SubsExpr>>),
     PatternListDef(Vec<String>),
     PatternListInst(Vec<String>),
-    Literal(String),
 }

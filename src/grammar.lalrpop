@@ -1,5 +1,5 @@
 use std::str::FromStr;
-use ast::{SubsExpr, Template};
+use ast::{SubsExpr, SubsListType, Template};
 
 grammar;
 
@@ -12,36 +12,36 @@ File: Box<Template> = {
     "file" r#"""# <Name> r#"""# "{" <Matching> "}" => Box::new(Template(<>)),
 };
 
-Matching: Box<SubsExpr> = {
+Matching: Box<SubsListType> = {
     ExprRegular,
-    ExprPattern
+    ExprPattern,
 };
 
-Makro: Box<SubsExpr> = {
-    <Name> "=" <Name> => Box::new(SubsExpr::Makro(<>)),
+ExprRegular: Box<SubsListType> = {
+    ExprRegularInst+ => Box::new(SubsListType::RegularList(<>))
 };
 
-ExprRegular: Box<SubsExpr> = {
-    ExprRegularInst+ => Box::new(SubsExpr::RegularList(<>))
+ExprRegularInst: Vec<(String, String)> = {
+    "{" <Comma<Makro>> "}" => <>,
 };
 
-ExprRegularInst: Box<SubsExpr> = {
-    "{" <Comma<Makro>> "}" => Box::new(SubsExpr::MakroList(<>)),
+Makro: (String, String) = {
+    <Name> "=" <Name> => (<>),
 };
 
-ExprPattern: Box<SubsExpr> = {
-    <ExprPatternDef> <ExprPatternInst+> => Box::new(SubsExpr::PatternList(<>)),
+ExprPattern: Box<SubsListType> = {
+    <ExprPatternDef> <ExprPatternInst+> => Box::new(SubsListType::PatternList(<>)),
 };
 
-ExprPatternDef: Box<SubsExpr> = {
-    "pattern" "{" <Comma<Name>> "}" => Box::new(SubsExpr::PatternListDef(<>)),
+ExprPatternDef: Vec<String> = {
+    "pattern" "{" <Comma<Name>> "}" => <>,
 };
 
-ExprPatternInst: Box<SubsExpr> = {
-    "{" <Comma<Name>> "}" => Box::new(SubsExpr::PatternListInst(<>)),
+ExprPatternInst: Vec<String> = {
+    "{" <Comma<Name>> "}" => <>,
 };
 
-Name: String = r"[A-Za-z0-9]+" => <>.to_string();
+Name: String = r"[\p{L}/0-9]+" => <>.to_string();
 
 Comma<T>: Vec<T> = {
     <v:(<T> ",")*> <e:T?> => match e {
@@ -53,3 +53,5 @@ Comma<T>: Vec<T> = {
         }
     }
 };
+
+// vim: ft=rust
