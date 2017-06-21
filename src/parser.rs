@@ -7,6 +7,7 @@ use ast::{TmplExpr, SubsExpr, Template};
 //use grammar::{parse_TmplExpr, parse_SubsExpr};
 use grammar::{parse_SubsExpr};
 use tmpl_grammar::{parse_TmplExpr};
+use lexer;
 
 pub fn expand_macros(template: &str, macros: MacroSet) -> String {
     //template.bytes().scan((0, Vec::new()), |state, c| {
@@ -107,7 +108,8 @@ fn test_subs() {
 }
 
 pub fn expand_template(template: &str, macros: &MacroSet) -> String {
-    let t = parse_TmplExpr(template).unwrap();
+    let l = lexer::Lexer::new(template);
+    let t = parse_TmplExpr(l).unwrap();
     let mut res = String::new();
     for t in t {
         res.push_str(expand_template_priv(*t, macros).as_str());

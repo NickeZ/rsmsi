@@ -1,5 +1,6 @@
 use std::str::FromStr;
 use ast::{TmplExpr};
+use lexer;
 
 grammar;
 
@@ -15,10 +16,10 @@ TmplExprTwo: Box<TmplExpr> = {
 
 TmplExprThree: Box<TmplExpr> = {
     "${" <TmplExprThree+> "}" => Box::new(TmplExpr::Makro(<>)),
-    "${" <TmplExprThree+> "=}" => Box::new(TmplExpr::MakroWithDefault(<>, vec![Box::new(TmplExpr::Text(String::from("")))])),
+    "${" <TmplExprThree+> "=" "}" => Box::new(TmplExpr::MakroWithDefault(<>, vec![Box::new(TmplExpr::Text(String::from("")))])),
     "${" <TmplExprThree+> "=" <TmplExprThree+> "}" => Box::new(TmplExpr::MakroWithDefault(<>)),
     "$(" <TmplExprThree+> ")" => Box::new(TmplExpr::Makro(<>)),
-    "$(" <TmplExprThree+> "=)" => Box::new(TmplExpr::MakroWithDefault(<>, vec![Box::new(TmplExpr::Text(String::from("")))])),
+    "$(" <TmplExprThree+> "=" ")" => Box::new(TmplExpr::MakroWithDefault(<>, vec![Box::new(TmplExpr::Text(String::from("")))])),
     "$(" <TmplExprThree+> "=" <TmplExprThree+> ")" => Box::new(TmplExpr::MakroWithDefault(<>)),
     Lit => Box::new(TmplExpr::Text(<>)),
 };
@@ -27,7 +28,7 @@ Sub: (Vec<Box<TmplExpr>>, Vec<Box<TmplExpr>>) = {
     <TmplExprThree+> "=" <TmplExprThree+>,
 };
 
-Lit: String = r#"[a-zA-Z0-9]*"# => <>.to_string();
+Lit: String = r#".*"# => <>.to_string();
 
 Comma<T>: Vec<T> = {
     <v:(<T> ",")*> <e:T?> => match e {
@@ -39,3 +40,25 @@ Comma<T>: Vec<T> = {
         }
     }
 };
+
+extern {
+    type Location = usize;
+    type Error = lexer::LexicalError;
+
+
+    enum lexer::Tok {
+        r#".*"# => lexer::Tok::Text,
+        "\n" => lexer::Tok::Newline,
+        r#"""# => lexer::Tok::Quote,
+        "=" => lexer::Tok::Equals,
+        "," => lexer::Tok::Comma,
+        " " => lexer::Tok::Space,
+        "\t" => lexer::Tok::Tab,
+        "include" => lexer::Tok::CommandInclude,
+        "substitute" => lexer::Tok::CommandSubstitute,
+        "${" => lexer::Tok::MacroBrBegin,
+        "}" => lexer::Tok::MacroBrEnd,
+        "$(" => lexer::Tok::MacroPaBegin,
+        ")" => lexer::Tok::MacroPaEnd,
+    }
+}

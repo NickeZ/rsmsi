@@ -34,7 +34,7 @@ pub struct Lexer<'input> {
 }
 
 impl<'input> Lexer<'input> {
-    fn new(input: &'input str) -> Self {
+    pub fn new(input: &'input str) -> Self {
         Lexer { chars: input.char_indices() }
     }
 
@@ -225,6 +225,11 @@ fn test_lexer() {
     assert!(lex.next().unwrap().unwrap() == ((33, Tok::Quote, 34)));
     assert!(lex.next().is_none());
     //println!("{}", stim);
+    //for l in lex {
+    //    println!("{:?} ", l);
+    //}
+    //let stim = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.";
+    //let lex = Lexer::new(stim);
     //for l in lex {
     //    println!("{:?} ", l);
     //}
