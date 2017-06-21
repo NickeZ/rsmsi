@@ -184,6 +184,7 @@ fn test_lexer() {
     assert!(lex.next().unwrap().unwrap() == ((8, Tok::Quote, 9)));
     assert!(lex.next().unwrap().unwrap() == ((9, Tok::Text, 17)));
     assert!(lex.next().unwrap().unwrap() == ((17, Tok::Quote, 18)));
+    assert!(lex.next().is_none());
     //println!("{}", stim);
     //for l in lex {
     //    println!("{:?} ", l);
@@ -202,14 +203,29 @@ fn test_lexer() {
     assert!(lex.next().unwrap().unwrap() == ((27, Tok::Equals, 28)));
     assert!(lex.next().unwrap().unwrap() == ((28, Tok::Text, 32)));
     assert!(lex.next().unwrap().unwrap() == ((32, Tok::Quote, 33)));
+    assert!(lex.next().is_none());
     //println!("{}", stim);
     //for l in lex {
     //    println!("{:?} ", l);
     //}
     let stim = "substitute \t\"mak1=val1,\tmak2=val2\"";
-    let lex = Lexer::new(stim);
-    println!("{}", stim);
-    for l in lex {
-        println!("{:?} ", l);
-    }
+    let mut lex = Lexer::new(stim);
+    assert!(lex.next().unwrap().unwrap() == ((0, Tok::CommandSubstitute, 10)));
+    assert!(lex.next().unwrap().unwrap() == ((10, Tok::Space, 11)));
+    assert!(lex.next().unwrap().unwrap() == ((11, Tok::Tab, 12)));
+    assert!(lex.next().unwrap().unwrap() == ((12, Tok::Quote, 13)));
+    assert!(lex.next().unwrap().unwrap() == ((13, Tok::Text, 17)));
+    assert!(lex.next().unwrap().unwrap() == ((17, Tok::Equals, 18)));
+    assert!(lex.next().unwrap().unwrap() == ((18, Tok::Text, 22)));
+    assert!(lex.next().unwrap().unwrap() == ((22, Tok::Comma, 23)));
+    assert!(lex.next().unwrap().unwrap() == ((23, Tok::Tab, 24)));
+    assert!(lex.next().unwrap().unwrap() == ((24, Tok::Text, 28)));
+    assert!(lex.next().unwrap().unwrap() == ((28, Tok::Equals, 29)));
+    assert!(lex.next().unwrap().unwrap() == ((29, Tok::Text, 33)));
+    assert!(lex.next().unwrap().unwrap() == ((33, Tok::Quote, 34)));
+    assert!(lex.next().is_none());
+    //println!("{}", stim);
+    //for l in lex {
+    //    println!("{:?} ", l);
+    //}
 }
