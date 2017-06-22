@@ -1,5 +1,4 @@
 use std::str::CharIndices;
-use std::iter::Peekable;
 
 pub type Spanned<Tok, Loc, Error> = Result<(Loc, Tok, Loc), Error>;
 

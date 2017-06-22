@@ -3,7 +3,7 @@ use std::path::PathBuf;
 
 use clap::{Arg, App};
 
-use makro::{self, Macro, MacroSet, parse_macros};
+use makro::{self, MacroSet, parse_macros};
 
 const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 

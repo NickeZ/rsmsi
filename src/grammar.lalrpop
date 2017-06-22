@@ -1,5 +1,4 @@
-use std::str::FromStr;
-use ast::{SubsExpr, SubsListType, Template};
+use ast::{SubsListType, Template};
 
 grammar;
 

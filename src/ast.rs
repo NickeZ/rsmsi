@@ -15,9 +15,3 @@ pub enum SubsListType {
     RegularList(Vec<Vec<(String, String)>>),
     PatternList(Vec<String>, Vec<Vec<String>>),
 }
-
-#[derive(PartialEq, Debug)]
-pub enum SubsExpr {
-    PatternListDef(Vec<String>),
-    PatternListInst(Vec<String>),
-}

@@ -3,13 +3,13 @@ use std::collections::HashMap;
 use std::io::Read;
 
 use makro::MacroSet;
-use ast::{TmplExpr, SubsExpr, SubsListType, Template};
+use ast::{TmplExpr, SubsListType, Template};
 //use grammar::{parse_TmplExpr, parse_SubsExpr};
 use grammar::{parse_SubsExpr};
 use tmpl_grammar::{parse_TmplExpr};
 use lexer;
 
-pub fn expand_macros(template: &str, macros: MacroSet) -> String {
+//pub fn expand_macros(template: &str, macros: MacroSet) -> String {
     //template.bytes().scan((0, Vec::new()), |state, c| {
     //    let (counter, list) = *state;
     //    if c == b'$' {
@@ -22,38 +22,38 @@ pub fn expand_macros(template: &str, macros: MacroSet) -> String {
     //    *state = *state;
     //    Some(*state)
     //});
-    unimplemented!()
-}
+//    unimplemented!()
+//}
 
 // Returns how many bytes forward the matching paren is.
-fn find_matching_brace(input: &[u8]) -> Result<usize, ()> {
-    find_matching(input, b'{', b'}')
-}
-
-fn find_matching_paren(input: &[u8]) -> Result<usize, ()> {
-    find_matching(input, b'(', b')')
-}
-
-fn find_matching(input: &[u8], open: u8, close: u8) -> Result<usize, ()>
-{
-    input.iter()
-        .scan((0, 1usize), |state, &c| { // state = (chars, paren_counter)
-            state.0 = state.0 + 1;
-            if c == open {
-                state.1 = state.1 + 1;
-            }
-            if c == close {
-                state.1 = state.1 - 1;
-            }
-            Some(*state)
-        })
-        .take_while(|state| {
-            state.0 != 0
-        })
-        .last()
-        .map(|state| state.0 - 1)
-        .ok_or(())
-}
+//fn find_matching_brace(input: &[u8]) -> Result<usize, ()> {
+//    find_matching(input, b'{', b'}')
+//}
+//
+//fn find_matching_paren(input: &[u8]) -> Result<usize, ()> {
+//    find_matching(input, b'(', b')')
+//}
+//
+//fn find_matching(input: &[u8], open: u8, close: u8) -> Result<usize, ()>
+//{
+//    input.iter()
+//        .scan((0, 1usize), |state, &c| { // state = (chars, paren_counter)
+//            state.0 = state.0 + 1;
+//            if c == open {
+//                state.1 = state.1 + 1;
+//            }
+//            if c == close {
+//                state.1 = state.1 - 1;
+//            }
+//            Some(*state)
+//        })
+//        .take_while(|state| {
+//            state.0 != 0
+//        })
+//        .last()
+//        .map(|state| state.0 - 1)
+//        .ok_or(())
+//}
 
 pub fn expand_subs(subs: &str) -> String {
     let mut res = String::new();
@@ -65,8 +65,8 @@ pub fn expand_subs(subs: &str) -> String {
         fh.read_to_end(&mut buf).unwrap_or_else(|e| die!("Failed to read from filr: {}", e));
         let template = String::from_utf8(buf).unwrap_or_else(|e| die!("Invalid utf8 in file: {}", e));
         let macros_v = create_hashmap(*macros);
-        for macros in macros_v {
-            let expanded = expand_template(&template, &macros);
+        for mut macros in macros_v {
+            let expanded = expand_template(&template, &mut macros);
             res.push_str(expanded.as_str());
         }
     }
@@ -140,7 +140,7 @@ fn test_subs() {
     //println!("{:?}", s);
 }
 
-pub fn expand_template(template: &str, macros: &MacroSet) -> String {
+pub fn expand_template(template: &str, macros: &mut MacroSet) -> String {
     //let l = lexer::Lexer::new(template);
     //for l in l {
     //    println!("{:?}", l);
@@ -154,7 +154,7 @@ pub fn expand_template(template: &str, macros: &MacroSet) -> String {
     res
 }
 
-fn expand_template_priv(item: TmplExpr, macros: &MacroSet) -> String {
+fn expand_template_priv(item: TmplExpr, macros: &mut MacroSet) -> String {
     match item {
         TmplExpr::Makro(list) => {
             let mut res = String::new();
@@ -184,10 +184,21 @@ fn expand_template_priv(item: TmplExpr, macros: &MacroSet) -> String {
             s
         },
         TmplExpr::Substitute(v) => {
+            for (name_v, value_v) in v {
+                let mut name = String::new();
+                for item in name_v {
+                    name.push_str(&expand_template_priv(*item, macros));
+                }
+                let mut value = String::new();
+                for item in value_v {
+                    value.push_str(&expand_template_priv(*item, macros));
+                }
+                macros.insert(name, value);
+            }
             String::from("")
         }
         TmplExpr::Include(file) => {
-            String::from("")
+            String::from(format!("TODO {}", file))
         }
     }
 }
