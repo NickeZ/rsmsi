@@ -60,10 +60,10 @@ pub fn expand_subs(subs: &str) -> String {
     for file in parse_SubsExpr(subs).unwrap() {
         let pair = *file; // Work around a bug. See issue #16223
         let Template(filename, macros) = pair;
-        let mut fh = File::open(filename).unwrap();
+        let mut fh = File::open(filename).unwrap_or_else(|e| die!("Failed to open file: {}", e));
         let mut buf = Vec::new();
-        fh.read_to_end(&mut buf).unwrap();
-        let template = String::from_utf8(buf).unwrap();
+        fh.read_to_end(&mut buf).unwrap_or_else(|e| die!("Failed to read from filr: {}", e));
+        let template = String::from_utf8(buf).unwrap_or_else(|e| die!("Invalid utf8 in file: {}", e));
         let macros_v = create_hashmap(*macros);
         for macros in macros_v {
             let expanded = expand_template(&template, &macros);
