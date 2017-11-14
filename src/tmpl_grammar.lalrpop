@@ -8,8 +8,8 @@ pub TmplExpr: Vec<Box<TmplExpr>> = {
 };
 
 TmplExprTwo: Box<TmplExpr> = {
-    "include" Whitespace+ r#"""# <Lit> r#"""# => Box::new(TmplExpr::Include(<>)),
-    "substitute" Whitespace+ r#"""# <Comma<Sub>> r#"""# => Box::new(TmplExpr::Substitute(<>)),
+    "include" Whitespace+ r#"""# <Lit> r#"""# Newline => Box::new(TmplExpr::Include(<>)),
+    "substitute" Whitespace+ r#"""# <Comma<Sub>> r#"""# Newline => Box::new(TmplExpr::Substitute(<>)),
     TmplExprThree,
 };
 
@@ -21,6 +21,7 @@ TmplExprThree: Box<TmplExpr> = {
     "$(" <TmplExprThree+> "=" ")" => Box::new(TmplExpr::MakroWithDefault(<>, vec![Box::new(TmplExpr::Text(String::from("")))])),
     "$(" <TmplExprThree+> "=" <TmplExprThree+> ")" => Box::new(TmplExpr::MakroWithDefault(<>)),
     Lit => Box::new(TmplExpr::Text(<>)),
+    EscapedLit => Box::new(TmplExpr::Text(<>)),
     Space => Box::new(TmplExpr::Text(<>)),
     Tab => Box::new(TmplExpr::Text(<>)),
     Newline => Box::new(TmplExpr::Text(<>)),
@@ -31,6 +32,8 @@ Sub: (Vec<Box<TmplExpr>>, Vec<Box<TmplExpr>>) = {
 };
 
 Lit: String = r#".*"# => <>.to_string();
+
+EscapedLit: String =  r#"\""# <Lit> r#"\""# => <>.to_string();
 
 Space: String = " " => " ".to_string();
 Tab: String = "\t" => "\t".to_string();
@@ -61,6 +64,7 @@ extern {
         r#".*"# => lexer::Tok::Text(<&'input str>),
         "\n" => lexer::Tok::Newline,
         r#"""# => lexer::Tok::Quote,
+        r#"\""# => lexer::Tok::EscapedQuote,
         "=" => lexer::Tok::Equals,
         "," => lexer::Tok::Comma,
         " " => lexer::Tok::Space,

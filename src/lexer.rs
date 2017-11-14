@@ -10,6 +10,7 @@ pub enum Tok<'input> {
     Text(&'input str),
     Newline,
     Quote,
+    EscapedQuote,
     Equals,
     Comma,
     Space,
@@ -127,6 +128,20 @@ impl<'input> Iterator for Lexer<'input> {
                         ')' => return Some(Ok((i, Tok::MacroPaEnd, i+1))),
                         '\n' => return Some(Ok((i, Tok::Newline, i+1))),
                         '"' => return Some(Ok((i, Tok::Quote, i+1))),
+                        '\\' => {
+                            let ahead = self.chars.as_str();
+                            match ahead.chars().next() {
+                                Some('"') => {
+                                    return Some(Ok((i, Tok::EscapedQuote, i+2)))
+                                },
+                                Some(_) | None => {
+                                    if collect.is_none() {
+                                        collect = Some((i, current));
+                                    }
+                                    continue
+                                },
+                            }
+                        }
                         '=' => return Some(Ok((i, Tok::Equals, i+1))),
                         ',' => return Some(Ok((i, Tok::Comma, i+1))),
                         ' ' => return Some(Ok((i, Tok::Space, i+1))),

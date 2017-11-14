@@ -123,8 +123,10 @@ fn test_expand_subs() {
 
 #[test]
 fn test_subs() {
+    let s = parse_SubsExpr("file test/trivial.tmpl {{name=niklas, age=30}}");
+    //assert!(s == "My name is niklas\nMy age is 30\n", "trivial.tmpl did not correctly expand");
     let s = parse_SubsExpr("file test/test1 {{mak1=val1, mak2=val2}}");
-    //println!("{:?}", s);
+    println!("{:?}", s);
     let s = parse_SubsExpr("file test/test1 {{mak1=val1, mak2=val2}{mak1=val3, mak2=val4}}");
     //println!("{:?}", s);
     let s = parse_SubsExpr("file \"test/test1\" { pattern {mak1, mak2} {val1, val2}}");
@@ -141,14 +143,15 @@ fn test_subs() {
 }
 
 pub fn expand_template(template: &str, macros: &mut MacroSet) -> String {
-    //let l = lexer::Lexer::new(template);
-    //for l in l {
-    //    println!("{:?}", l);
-    //}
+    let l = lexer::Lexer::new(template);
+    for l in l {
+        println!("{:?}", l);
+    }
     let l = lexer::Lexer::new(template);
     let t = parse_TmplExpr(l).unwrap();
     let mut res = String::new();
     for t in t {
+        println!("{:?}", t);
         res.push_str(expand_template_priv(*t, macros).as_str());
     }
     res
@@ -203,55 +206,27 @@ fn expand_template_priv(item: TmplExpr, macros: &mut MacroSet) -> String {
     }
 }
 
+#[cfg(test)]
+const test_data: &'static [(&'static [(&'static str, &'static str)], &'static str, &'static str)] = &[
+    (&[("name", "niklas"), ("age", "30")], "nothing to expand\t\n", "nothing to expand\t\n"),
+    (&[("name", "niklas"), ("age", "30")], "${name} ${age}", "niklas 30"),
+    (&[("name", "niklas")], "${name} ${age=20}", "niklas 20"),
+    (&[("name1", "niklas"), ("num", "1")], "${name${num}}", "niklas"),
+    (&[("name1", "niklas")], "${name${num=1}}", "niklas"),
+    (&[("n", "n")], "substitute \"name=niklas\"\n${name}", "niklas"),
+    (&[("n", "n")], "substitute \"name=niklas,age=30\"\n${name} ${age}", "niklas 30"),
+    (&[("n", "n")], "substitute \"name=\\\"niklas\\\",age=30\"\n${name} ${age}", "\"niklas\" 30"),
+    (&[("P", "Q")], "${P=${P}}", "Q"),
+];
+
 #[test]
 fn macro_expansion_test() {
-    //let t = parse_TmplExpr("${test}");
-    //println!("{:?}", t);
-    //let t = parse_TmplExpr("substitute \"test=${te}st, test${2}=val\"");
-    //println!("{:?}", t);
-    ////assert!(t.unwrap() == Box::new(Expr::List(vec![Box::new(Expr::Makro(vec![Box::new(Expr::Final(String::from("test")))]))])));
-    //let t = parse_TmplExpr("${t e s t }");
-    //println!("{:?}", t);
-    //let t = parse_TmplExpr("${test}${test}");
-    //println!("{:?}", t);
-    //let t = parse_TmplExpr("${${test}}");
-    //println!("{:?}", t);
-    //let t = parse_TmplExpr("${test=sda}");
-    //println!("{:?}", t);
-    //let t = parse_TmplExpr("${test=}");
-    //println!("{:?}", t);
-    //let t = parse_TmplExpr("${tes${TEST}=}");
-    //println!("{:?}", t);
-    //let t = parse_TmplExpr("${t${TA}s${TEST}=}");
-    //println!("{:?}", t);
-
-    let mut subs = HashMap::new();
-    subs.extend(vec![(String::from("TEST"), String::from("APA")), (String::from("IN"), String::from("ST"))].into_iter());
-    let res = expand_template("${TE${IN}}", &mut subs);
-    println!("{:?}", res);
-    assert!(res == "APA", "Did not expand to APA");
-
-    let mut subs = HashMap::new();
-    subs.extend(vec![(String::from("TEST"), String::from("APA"))].into_iter());
-    let res = expand_template("${TE${IN=ST}}", &mut subs);
-    println!("{:?}", res);
-    assert!(res == "APA", "Did not expand to APA");
-
-    let mut subs = HashMap::new();
-    subs.extend(vec![(String::from("TEST"), String::from("APA"))].into_iter());
-    let res = expand_template("detta ar en random text", &mut subs);
-    println!("{:?}", res);
-    assert!(res == "detta ar en random text", "Did not expand");
-
-    let mut subs = HashMap::new();
-    subs.extend(vec![(String::from("TEST"), String::from("APA"))].into_iter());
-    let res = expand_template("substitute \"hej=da\"hej ${TE${IN=ST}}", &mut subs);
-    println!("{:?}", res);
-    assert!(res == "hej APA", "Did not expand to APA");
-
-    let mut subs = HashMap::new();
-    subs.extend(vec![(String::from("P"), String::from("Q"))].into_iter());
-    let res = expand_template("${P=${P}}", &mut subs);
-    println!("{:?}", res);
-    assert!(res == "Q", "Did not expand to Q");
+    for entry in test_data {
+        let mut subs = HashMap::new();
+        for &(k,v) in entry.0 {
+            subs.insert(k.to_string(),v.to_string());
+        }
+        let res = expand_template(entry.1, &mut subs);
+        assert!(res == entry.2, format!("'{}' is not '{}' expanded to '{}'", res, entry.1, entry.2));
+    }
 }
