@@ -20,8 +20,8 @@ TmplExprThree: Box<TmplExpr> = {
     "$(" <TmplExprThree+> ")" => Box::new(TmplExpr::Makro(<>)),
     "$(" <TmplExprThree+> "=" ")" => Box::new(TmplExpr::MakroWithDefault(<>, vec![Box::new(TmplExpr::Text(String::from("")))])),
     "$(" <TmplExprThree+> "=" <TmplExprThree+> ")" => Box::new(TmplExpr::MakroWithDefault(<>)),
-    Lit => Box::new(TmplExpr::Text(<>)),
     EscapedLit => Box::new(TmplExpr::Text(<>)),
+    Lit => Box::new(TmplExpr::Text(<>)),
     Space => Box::new(TmplExpr::Text(<>)),
     Tab => Box::new(TmplExpr::Text(<>)),
     Newline => Box::new(TmplExpr::Text(<>)),
@@ -33,7 +33,7 @@ Sub: (Vec<Box<TmplExpr>>, Vec<Box<TmplExpr>>) = {
 
 Lit: String = r#".*"# => <>.to_string();
 
-EscapedLit: String =  r#"\""# <Lit> r#"\""# => <>.to_string();
+EscapedLit: String = "\\" r#"""# <r#".*"#> "\\" r#"""# => "\"".to_string() + <> + "\"";
 
 Space: String = " " => " ".to_string();
 Tab: String = "\t" => "\t".to_string();
@@ -64,7 +64,7 @@ extern {
         r#".*"# => lexer::Tok::Text(<&'input str>),
         "\n" => lexer::Tok::Newline,
         r#"""# => lexer::Tok::Quote,
-        r#"\""# => lexer::Tok::EscapedQuote,
+        "\\" => lexer::Tok::Backslash,
         "=" => lexer::Tok::Equals,
         "," => lexer::Tok::Comma,
         " " => lexer::Tok::Space,

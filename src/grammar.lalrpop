@@ -40,7 +40,7 @@ ExprPatternInst: Vec<String> = {
     "{" <Comma<Name>> "}" => <>,
 };
 
-Name: String = r"[\p{L}/0-9]+" => <>.to_string();
+Name: String = r"[\.\p{L}/0-9_]+" => <>.to_string();
 
 Comma<T>: Vec<T> = {
     <v:(<T> ",")*> <e:T?> => match e {

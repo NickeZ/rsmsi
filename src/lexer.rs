@@ -2,7 +2,7 @@ use std::str::CharIndices;
 
 pub type Spanned<Tok, Loc, Error> = Result<(Loc, Tok, Loc), Error>;
 
-const SPECIAL_CHARS: &str = "\n\"=, \t${}()";
+const SPECIAL_CHARS: &str = "\n\"=, \t${}()\\";
 const KEYWORDS: &[&str] = &["include", "substitute", "${", "$("];
 
 #[derive(Debug, PartialEq)]
@@ -10,7 +10,7 @@ pub enum Tok<'input> {
     Text(&'input str),
     Newline,
     Quote,
-    EscapedQuote,
+    Backslash,
     Equals,
     Comma,
     Space,
@@ -128,20 +128,7 @@ impl<'input> Iterator for Lexer<'input> {
                         ')' => return Some(Ok((i, Tok::MacroPaEnd, i+1))),
                         '\n' => return Some(Ok((i, Tok::Newline, i+1))),
                         '"' => return Some(Ok((i, Tok::Quote, i+1))),
-                        '\\' => {
-                            let ahead = self.chars.as_str();
-                            match ahead.chars().next() {
-                                Some('"') => {
-                                    return Some(Ok((i, Tok::EscapedQuote, i+2)))
-                                },
-                                Some(_) | None => {
-                                    if collect.is_none() {
-                                        collect = Some((i, current));
-                                    }
-                                    continue
-                                },
-                            }
-                        }
+                        '\\' => return Some(Ok((i, Tok::Backslash, i+1))),
                         '=' => return Some(Ok((i, Tok::Equals, i+1))),
                         ',' => return Some(Ok((i, Tok::Comma, i+1))),
                         ' ' => return Some(Ok((i, Tok::Space, i+1))),
@@ -224,10 +211,10 @@ fn test_lexer() {
     //assert!(lex.next().unwrap().unwrap() == ((9, Tok::Text, 17)));
     //assert!(lex.next().unwrap().unwrap() == ((17, Tok::Quote, 18)));
     //assert!(lex.next().is_none());
-    println!("{}", stim);
-    for l in lex {
-        println!("{:?} ", l);
-    }
+    //println!("{}", stim);
+    //for l in lex {
+    //    println!("{:?} ", l);
+    //}
     let stim = "substitute \"mak1=val1, mak2=val2\"";
     let mut lex = Lexer::new(stim);
     //assert!(lex.next().unwrap().unwrap() == ((0, Tok::CommandSubstitute, 10)));
@@ -243,10 +230,10 @@ fn test_lexer() {
     //assert!(lex.next().unwrap().unwrap() == ((28, Tok::Text, 32)));
     //assert!(lex.next().unwrap().unwrap() == ((32, Tok::Quote, 33)));
     //assert!(lex.next().is_none());
-    println!("{}", stim);
-    for l in lex {
-        println!("{:?} ", l);
-    }
+    //println!("{}", stim);
+    //for l in lex {
+    //    println!("{:?} ", l);
+    //}
     let stim = "substitute \t\"mak1=val1,\tmak2=val2\"";
     let mut lex = Lexer::new(stim);
     //assert!(lex.next().unwrap().unwrap() == ((0, Tok::CommandSubstitute, 10)));
@@ -263,10 +250,10 @@ fn test_lexer() {
     //assert!(lex.next().unwrap().unwrap() == ((29, Tok::Text, 33)));
     //assert!(lex.next().unwrap().unwrap() == ((33, Tok::Quote, 34)));
     //assert!(lex.next().is_none());
-    println!("{}", stim);
-    for l in lex {
-        println!("{:?} ", l);
-    }
+    //println!("{}", stim);
+    //for l in lex {
+    //    println!("{:?} ", l);
+    //}
     //let stim = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.";
     //let lex = Lexer::new(stim);
     //for l in lex {

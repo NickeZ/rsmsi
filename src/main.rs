@@ -1,3 +1,4 @@
+extern crate lalrpop_util;
 extern crate clap;
 
 macro_rules! die {
